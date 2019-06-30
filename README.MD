@@ -22,4 +22,6 @@ Every time you need to add a peer to your network, use this command and let you 
 
 ## TODO
 
-Add IPv6 support
+* Add IPv6 support
+* Add comments on the code
+* Add possibilities to use the script on non-Debian servers
