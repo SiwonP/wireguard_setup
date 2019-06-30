@@ -17,5 +17,5 @@ To initiate the VPN and configure the Unbound DNS, use the following command and
 Every time you need to add a peer to your network, use this command and let you guide one more time :
 
 ```
-./serve_config.sh peer
+./server_config.sh peer
 ```
