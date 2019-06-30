@@ -216,7 +216,7 @@ peer()
     echo Enter the public key of the peer :
     read key
     echo PublicKey = $key >> /etc/wireguard/wg0.conf
-    file="subnet"
+    file="/etc/wireguard/subnet"
     base_regex="base\:([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)"
     current_regex="current\:([0-9]*)"
 
