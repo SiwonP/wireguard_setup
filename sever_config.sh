@@ -37,13 +37,40 @@ generate_keys()
     wg genkey | tee privatekey | wg pubkey > publickey
 }
 
+extract_address()
+{
+    regex_ip="([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)([0-9]{1,3})\/[0-9]{2}"
+    if [[ $1 =~ $regex_ip ]]; then
+        base=${BASH_REMATCH[1]}
+        echo base:$base > subnet
+        current=${BASH_REMATCH[2]}
+        echo current:$current >> subnet
+    fi
+
+}
+
+firewall()
+{
+    IP=$1
+    PORT=$2
+
+    echo 1 > /proc/sys/net/ipv4/ip_forward
+
+    iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+    iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+    iptables -A INPUT -p udp -m udp --dport $PORT -m conntrack --ctstate NEW -j ACCEPT
+    iptables -A INPUT -s $IP -p tcp -m tcp --dport 53 -m conntrack --ctstate NEW -j ACCEPT
+    iptables -A INPUT -s $IP -p udp -m udp --dport 53 -m conntrack --ctstate NEW -j ACCEPT
+
+}
+
 dns()
 {
     IP=$1
 
     if [[ $OSTYPE =~ "linux" ]]; then 
         apt-get install unbound unbound-host
-    curl -o /var/lib/unbound/root.hints https://www.internic.net/domain/named.cache
+        curl -o /var/lib/unbound/root.hints https://www.internic.net/domain/named.cache
     fi
 
 
@@ -96,7 +123,13 @@ server:
     prefetch: yes
     prefetch-key: yes
 ENDOFFILE
+
+    chown -R unbound:unbound /var/lib/unbound
+    systemctl enable unbound-resolvconf
+    systemctl enable unbound
 }
+
+
 
 init()
 {
@@ -156,6 +189,23 @@ init()
     echo ListenPort = $PORT >> wg0.conf
     echo PrivateKey = $private >> wg0.conf
 
+    interface_regex="([a-z]{1,3}[0-9])\: \<BROADCAST"
+    interface=`ip link show`
+    if [[ $interface =~ $interface_regex ]]; then
+        in=${BASH_REMATCH[1]}
+    fi
+
+    echo "PostUp = iptables -t nat -A POSTROUTING -o $in -j MASQUERADE;
+    ip6tables -t nat -A POSTROUTING -o $in -j MASQUERADE" >> wg0.conf
+    echo "PostDown = iptables -t nat -D POSTROUTING -o $in -j MASQUERADE;
+    ip6tables -t nat -D POSTROUTING -o $in -j MASQUERADE" >> wg0.conf
+
+    wg-quick up wg0
+
+    extract_address "$SUBNET"
+
+    firewall "$SUBNET" "$PORT"
+
     dns "$SUBNET"
 }
 
@@ -166,6 +216,25 @@ peer()
     echo Enter the public key of the peer :
     read key
     echo PublicKey = $key >> wg0.conf
+    file="subnet"
+    base_regex="base\:([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)"
+    current_regex="current\:([0-9]*)"
+    while read LINE
+    do 
+    if [[ $LINE =~ $base_regex ]]; then
+        base=${BASH_REMATCH[1]}
+    elif [[ $LINE =~ $current_regex ]]; then
+        current=${BASH_REMATCH[1]}
+    fi
+
+    done < $file
+
+    current=$((current+1))
+
+    echo $base$current
+    echo AllowedIPs = $base$current/32 >> wg0.conf
+    echo base:$base > subnet
+    echo current:$current >> subnet
 }
 
 if [ $# -eq 0 ]; then

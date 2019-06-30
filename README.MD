@@ -19,3 +19,7 @@ Every time you need to add a peer to your network, use this command and let you 
 ```
 ./server_config.sh peer
 ```
+
+## TODO
+
+Add IPv6 support
