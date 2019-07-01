@@ -211,6 +211,7 @@ init()
 
 peer()
 {
+    wg-quick down wg0
     echo "" >> /etc/wireguard/wg0.conf
     echo \[Peer\] >> /etc/wireguard/wg0.conf
     echo Enter the public key of the peer :
@@ -236,6 +237,7 @@ peer()
     echo AllowedIPs = $base$current/32 >> /etc/wireguard/wg0.conf
     echo base:$base > /etc/wireguard/subnet
     echo current:$current >> /etc/wireguard/subnet
+    wg-quick up wg0
 }
 
 if [ $# -eq 0 ]; then
