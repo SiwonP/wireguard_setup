@@ -11,7 +11,7 @@ private=`cat privatekey_$client`
 echo [Interface] > $client.conf
 echo PrivateKey = $private >> $client.conf
 
-Echo Enter allocated address by the server :
+echo Enter allocated address by the server :
 read ip
 
 echo Address = $ip >> $client.conf
