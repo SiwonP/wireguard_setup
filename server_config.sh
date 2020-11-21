@@ -195,10 +195,10 @@ init()
         in=${BASH_REMATCH[1]}
     fi
 
-    #echo "PostUp = iptables -t nat -A POSTROUTING -o $in -j MASQUERADE;
-    #ip6tables -t nat -A POSTROUTING -o $in -j MASQUERADE" >> /etc/wireguard/wg0.conf
-    #echo "PostDown = iptables -t nat -D POSTROUTING -o $in -j MASQUERADE;
-    #ip6tables -t nat -D POSTROUTING -o $in -j MASQUERADE" >> /etc/wireguard/wg0.conf
+    echo "PostUp = iptables -t nat -A POSTROUTING -o $in -j MASQUERADE;
+    ip6tables -t nat -A POSTROUTING -o $in -j MASQUERADE" >> /etc/wireguard/wg0.conf
+    echo "PostDown = iptables -t nat -D POSTROUTING -o $in -j MASQUERADE;
+    iptables -t nat -D POSTROUTING -o $in -j MASQUERADE" >> /etc/wireguard/wg0.conf
 
     wg-quick up wg0
 
